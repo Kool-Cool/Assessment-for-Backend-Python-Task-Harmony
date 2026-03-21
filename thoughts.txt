@@ -1,0 +1,95 @@
+=============================
+002
+
+1.same key value for port_code_referance.json
+
+
+{
+    "code": "INMAA",
+    "name": "Bangalore ICD"
+  },
+  {
+    "code": "INMAA",
+    "name": "Chennai"
+  },
+  {
+    "code": "INMAA",
+    "name": "Chennai ICD"
+  },
+  {
+    "code": "INMAA",
+    "name": "Chennai ICD / Bangalore ICD / Hyderabad ICD"
+  },
+
+
+
+
+
+
+
+  {
+    "code": "KRPUS",
+    "name": "Busan"
+  },
+  {
+    "code": "KRPUS",
+    "name": "Chennai"
+  }
+
+
+  Score all possible matches and pick the best one based on similarity + context
+  DESIGN: 4-LAYER PORT RESOLVER
+  1. Exact match
+  2. Alias match
+  3. Fuzzy match
+  4. Context scoring (POL/POD)
+
+
+
+2. product_line and Alias
+"Shenzhen"
+CNSZX
+Shenzhen
+Shenzhen / Guangzhou
+
+
+
+
+
+
+
+
+
+
+===================
+001
+
+English_Only
+
+flow 
+
+email => CUSTOM_PROMPT => (GroqAPI) LLM O/P => Parse it into Schema
+
+using Queue for emails or making async microservice for simulatneously processing huge emails
+[if so then threads or multi processing ( based on deployment) workers/resource assingment for load balancing]
+
+"""  
+Referance from GT Schema
+
+  {
+    "id",
+    "product_line",
+    "incoterm",
+    "origin_port_code",
+    "origin_port_name",
+    "destination_port_code",
+    "destination_port_name",
+    "cargo_weight_kg",
+    "cargo_cbm",
+    "is_dangerous"  
+    }
+
+"""
+
+
+Business Rules 

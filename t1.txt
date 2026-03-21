@@ -1,0 +1,9 @@
+groq
+pydantic
+python-dotenv
+numpy
+pandas
+scikit-learn
+matplotlib 
+seaborn
+
