@@ -1,0 +1,15 @@
+## Prompt Evolution
+
+### v1: Basic extraction
+- Accuracy: 5% (overall accuracy)
+- Issues: Port codes wrong, missing incoterms
+- Example: EMAIL_007 extracted "Chennai" instead of "INMAA"
+
+### v2: Added UN/LOCODE examples
+- Accuracy: 20%
+- Issues: India detection failing for some ports
+- Example: EMAIL_023 incorrectly set product_line for Nhava Sheva
+
+### v4: Added business rules explicitly
+- Accuracy: 56%
+- Remaining issues: 043 , 

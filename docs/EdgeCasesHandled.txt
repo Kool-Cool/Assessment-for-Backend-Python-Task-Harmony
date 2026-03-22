@@ -1,0 +1,44 @@
+## Accuracy Metrics
+=== CLASSIFICATION METRICS ===
+product_line: acc=1.000 f1=1.000
+incoterm: acc=0.960 f1=0.960
+origin_port_code: acc=0.905 f1=0.906
+destination_port_code: acc=0.740 f1=0.815
+is_dangerous: acc=1.000 f1=1.000
+
+=== NUMERIC METRICS ===
+cargo_weight_kg: MAE=0.00, 5%=1.00, 10%=1.00
+cargo_cbm: MAE=0.00, 5%=1.00, 10%=1.00
+
+FULL RECORD ACCURACY: 0.56
+
+
+
+## EdgeCases
+1. same key value for port_code_referance.json => used the fuzzy logic for that
+2. product_line Alias
+3. multi-route ambiguity => prompt update
+
+
+
+
+## System Design Question
+Scale
+Use a queue‑based architecture (Kafka/SQS) with containerized workers pulling emails for processing.
+
+Apply extraction via cost‑efficient multilingual models or translation pipelines, store results in NoSQL (MongoDB/DynamoDB).
+
+Autoscale workers to handle bursts, batch requests to keep compute costs low, staying within $500/month while meeting 5‑minute SLA.
+
+Monitoring
+Track accuracy daily with sampled emails, log field‑level and record‑level metrics in dashboards (Grafana/Prometheus).
+
+Set alerts if accuracy dips below thresholds (e.g., 85%).
+
+Investigate by isolating degraded fields, checking for data drift (new formats/languages), and reviewing logs for parsing/prompt errors.
+
+Multilingual
+Add multilingual support: either use a multilingual LLM or translate Mandarin/Hindi emails into English before extraction.
+
+Build separate test sets for Mandarin, Hindi, and English, measure accuracy per language group.
+
