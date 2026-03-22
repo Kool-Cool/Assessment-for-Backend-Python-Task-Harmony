@@ -7,8 +7,9 @@ from datetime import datetime
 
 from schemas import Shipment
 from groq_setup import call_llm
-from prompts import prompt_v3
+from prompts import prompt_v3, prompt_v4
 from port_resolve import PortResolver
+import prompts
 
 
 
@@ -51,23 +52,21 @@ def assign_product_line(origin_code, destination_code):
         return "pl_sea_export_lcl"
     return None
 
-    # if destination_code and destination_code.startswith("IN"):
-    #     return "pl_sea_import_lcl"
-    # elif origin_code and origin_code.startswith("IN"):
-    #     return "pl_sea_export_lcl"
-    # return None
 
 
 def normalize_incoterm(incoterm_text):
     if not incoterm_text:
         return "FOB"
-    incoterm = incoterm_text.strip().upper()
-    if incoterm in VALID_INCOTERMS:
-        return incoterm
-    # ambiguous like "FOB or CIF" → default to FOB
-    if "FOB" in incoterm_text.upper():
-        return "FOB"
-    return "FOB"
+
+    text = incoterm_text.upper()
+
+    matches = re.findall(
+        r"\b(FOB|CIF|CFR|EXW|DDP|DAP|FCA|CPT|CIP|DPU)\b",
+        text
+    )
+
+    return matches[0] if matches else "FOB"
+
 
 
 def detect_dangerous(text):
@@ -87,20 +86,6 @@ def resolve_conflict(subject_value, body_value):
     return body_value if body_value else subject_value
 
 
-# def normalize_weight(weight_text):
-#     if not weight_text or weight_text.lower() in ["tbd","n/a","to be confirmed"]:
-#         return None
-#     if "lbs" in weight_text.lower():
-#         num = float(re.findall(r"\d+\.?\d*", weight_text)[0])
-#         return round(num * 0.453592, 2)
-#     if "mt" in weight_text.lower() or "tonne" in weight_text.lower():
-#         num = float(re.findall(r"\d+\.?\d*", weight_text)[0])
-#         return round(num * 1000, 2)
-#     if "kg" in weight_text.lower():
-#         num = float(re.findall(r"\d+\.?\d*", weight_text)[0])
-#         return round(num, 2)
-#     return None
-
 
 def normalize_weight(weight_text):
     if not weight_text:
@@ -111,7 +96,7 @@ def normalize_weight(weight_text):
     if text in ["tbd", "n/a", "to be confirmed"]:
         return None
 
-    # ✅ extract full number including commas
+    # extract full number including commas
     match = re.search(r"[\d,]+\.?\d*", text)
     if not match:
         return None
@@ -227,7 +212,7 @@ def process_emails():
 
     results = []
     for email in emails:
-        raw = call_llm(email=email, prompt=prompt_v3)
+        raw = call_llm(email=email, prompt=prompts.prompt_v4)
         try:
             llm_dict = extract_json(raw)            
             shipment_dict = enforce_rules(email, llm_dict)

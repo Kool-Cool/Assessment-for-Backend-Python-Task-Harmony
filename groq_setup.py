@@ -8,7 +8,7 @@ from pprint import pprint
 load_dotenv()
 api_key=os.getenv("GROQ_API_KEY")
 client = Groq(api_key=api_key)
-model="llama-3.3-70b-versatile"
+model=os.getenv("model","llama-3.3-70b-versatile")
 
 
 def call_llm(email, prompt , retries=3):
@@ -24,6 +24,8 @@ def call_llm(email, prompt , retries=3):
             )
             return response.choices[0].message.content
         except Exception as e:
+            print(f"\nAttempt {attempt+1} failed:")
+            print(type(e).__name__, "-", e)
             wait = 2 ** attempt
             time.sleep(wait)
     raise RuntimeError("LLM call failed after retries")

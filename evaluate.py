@@ -34,12 +34,16 @@ FIELDS_NUM = [
 # SAFE COMPARE
 
 def safe_equal(gt_val, pred_val):
-    if gt_val is None and pred_val is None:
+    if pd.isna(gt_val) and pd.isna(pred_val):
         return True
-    if gt_val is None or pred_val is None:
+    if pd.isna(gt_val) or pd.isna(pred_val):
         return False
-    return str(gt_val).strip().lower() == str(pred_val).strip().lower()
 
+    # numeric check
+    try:
+        return float(gt_val) == float(pred_val)
+    except:
+        return str(gt_val).strip().lower() == str(pred_val).strip().lower()
 
 
 # LOAD DATA
@@ -89,8 +93,6 @@ def evaluate(pred_file, gt_file):
     print("\n=== CLASSIFICATION METRICS ===")
 
     for f in FIELDS_CLASS:
-        # y_true = df[f + "_gt"]
-        # y_pred = df[f + "_pred"]
         mask = df[f + "_gt"].notna() & df[f + "_pred"].notna()
         y_true = df.loc[mask, f + "_gt"]
         y_pred = df.loc[mask, f + "_pred"]
@@ -106,7 +108,8 @@ def evaluate(pred_file, gt_file):
         print(f"{f}: acc={acc:.3f} f1={f1:.3f}")
 
         # confusion matrix
-        labels = sorted(list(set(y_true.dropna().tolist() + y_pred.dropna().tolist())))
+        # labels = sorted(list(set(y_true.dropna().tolist() + y_pred.dropna().tolist())))
+        labels = sorted(set(map(str, y_true)) | set(map(str, y_pred)))        
         cm = confusion_matrix(y_true, y_pred, labels=labels)
 
         plt.figure(figsize=(8, 6))
@@ -122,13 +125,17 @@ def evaluate(pred_file, gt_file):
     print("\n=== NUMERIC METRICS ===")
 
     for f in FIELDS_NUM:
-        y_true = df[f + "_gt"].fillna(0)
-        y_pred = df[f + "_pred"].fillna(0)
+        mask = df[f + "_gt"].notna() & df[f + "_pred"].notna()
+
+        y_true = df.loc[mask, f + "_gt"].astype(float)
+        y_pred = df.loc[mask, f + "_pred"].astype(float)
 
         mae = mean_absolute_error(y_true, y_pred)
 
         # % within tolerance
-        tol = np.abs(y_true - y_pred) / (y_true + 1e-6)
+        denom = np.where(y_true == 0, 1, y_true)
+        # tol = np.abs(y_true - y_pred) / (y_true + 1e-6)
+        tol = np.abs(y_true - y_pred) / denom
         within_5 = (tol < 0.05).mean()
         within_10 = (tol < 0.10).mean()
 
@@ -155,10 +162,29 @@ def evaluate(pred_file, gt_file):
     for _, r in df.iterrows():
         ok = True
 
-        for f in FIELDS_CLASS + FIELDS_NUM:
+        for f in FIELDS_CLASS :
             if not safe_equal(r[f + "_gt"], r[f + "_pred"]):
                 ok = False
                 break
+
+
+        # numeric fields (strict numeric compare)
+        if ok:
+            for f in FIELDS_NUM:
+                gt_val = r[f + "_gt"]
+                pred_val = r[f + "_pred"]
+
+                if pd.isna(gt_val) and pd.isna(pred_val):
+                    continue
+
+                if pd.isna(gt_val) or pd.isna(pred_val):
+                    ok = False
+                    break
+
+                if abs(float(gt_val) - float(pred_val)) > 1e-6:
+                    ok = False
+                    break
+
 
         if ok:
             full_correct += 1
@@ -182,6 +208,6 @@ def evaluate(pred_file, gt_file):
 
 if __name__ == "__main__":
     evaluate(
-        pred_file="./extract/output_20260321_234159.json",
+        pred_file="./extract/output_20260322_110616.json",
         gt_file="./ground_truth.json"
     )
